@@ -7,7 +7,7 @@ namespace LibraryOfBabel
 {
     public partial class Form1 : Form
     {
-        private const string Alphabet = "abcdefghijklmnopqrstuvwxyz ,.";
+        private const string Alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ,.";
         private const int PageLength = 3200;
 
         public Form1()
@@ -108,7 +108,7 @@ namespace LibraryOfBabel
 
         private void button1_Click(object sender, EventArgs e)
         {
-            string phrase = txtSearch.Text.Trim().ToLower();
+            string phrase = txtSearch.Text.Trim(); // <-- keep capitalization
 
             if (phrase.Length == 0)
             {
@@ -123,6 +123,7 @@ namespace LibraryOfBabel
             string pageText = GeneratePageWithPhrase(
                 loc.hex, loc.wall, loc.shelf, loc.volume, loc.page,
                 phrase, loc.insertIndex);
+
             // Display results
             rtbOutput.Text =
                 $"Your phrase exists at:\n" +
@@ -135,7 +136,7 @@ namespace LibraryOfBabel
                 $"=== PAGE TEXT ===\n" +
                 $"{pageText}";
 
-            // Highlight phrase in red
+            // Highlight phrase (case insensitive)
             int index = rtbOutput.Text.IndexOf(phrase, StringComparison.OrdinalIgnoreCase);
             if (index >= 0)
             {
@@ -144,7 +145,6 @@ namespace LibraryOfBabel
                 rtbOutput.SelectionBackColor = System.Drawing.Color.Transparent;
                 rtbOutput.Select(0, 0);
             }
-
         }
 
     }
