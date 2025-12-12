@@ -7,7 +7,7 @@ namespace LibraryOfBabel
 {
     public partial class Form1 : Form
     {
-        private const string Alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ,.";
+        private const string Alphabet = "abcdefghijklmnopqrstuvwxyz ,."; // remove uppercase letters
         private const int PageLength = 3200;
 
         public Form1()
@@ -140,12 +140,14 @@ namespace LibraryOfBabel
         // Update button1_Click
         private void button1_Click(object sender, EventArgs e)
         {
-            string phrase = txtSearch.Text.Trim();
+            string phrase = txtSearch.Text.Trim().ToLower(); // convert to lowercase
             if (phrase.Length == 0)
             {
                 MessageBox.Show("Enter a phrase to search.");
                 return;
             }
+
+            lastSearchedPhrase = phrase; // store lowercase phrase
 
             var loc = LocatePhrase(phrase);
 
@@ -173,7 +175,10 @@ namespace LibraryOfBabel
             tbWall.Value = loc.wall;
             pageRtb.Text = loc.page.ToString();
             rtbHex.Text = loc.hex;
+
+            lastPhraseLocation = loc; // store location
         }
+
         private (string hex, int wall, int shelf, int volume, int page, int insertIndex) LocatePhrase(string phrase)
         {
             using (SHA256 sha = SHA256.Create())
