@@ -147,34 +147,14 @@ namespace LibraryOfBabel
                 return;
             }
 
-            var loc = LocationFromPhrase(phrase);
+            var loc = LocatePhrase(phrase);
 
-            string pageText = GeneratePageWithPhrase(
-                loc.hex, loc.wall, loc.shelf, loc.volume, loc.page,
-                phrase, loc.insertIndex);
+            string pageText = GeneratePageWithPhrase(loc.hex, loc.wall, loc.shelf, loc.volume, loc.page, phrase, loc.insertIndex);
 
             rtbOutput.Text =
-                $"Your phrase exists at:\n" +
-                $"Hex: {loc.hex}\n" +
-                $"Wall: {loc.wall}\n" +
-                $"Shelf: {loc.shelf}\n" +
-                $"Volume: {loc.volume}\n" +
-                $"Page: {loc.page}\n\n" +
-                $"=== PAGE TEXT ===\n" +
-                $"{pageText}";
+                $"Your phrase exists at:\nHex: {loc.hex}\nWall: {loc.wall}\nShelf: {loc.shelf}\nVolume: {loc.volume}\nPage: {loc.page}\n\n=== PAGE TEXT ===\n{pageText}";
 
-
-            lblVolume.Text = "Volume: " + loc.volume.ToString();
-            tbVolume.Value = loc.volume;
-            lblShelf.Text = "Shelf: " + loc.shelf.ToString();
-            tbShelf.Value = loc.shelf;
-            lblWall.Text = "Wall: " + loc.wall.ToString();
-            tbWall.Value = loc.wall;
-            pageRtb.Text = loc.page.ToString();
-            rtbHex.Text = loc.hex;
-
-
-            // Highlight
+            // Highlight phrase
             int index = rtbOutput.Text.IndexOf(phrase, StringComparison.Ordinal);
             if (index >= 0)
             {
@@ -184,11 +164,33 @@ namespace LibraryOfBabel
                 rtbOutput.Select(0, 0);
             }
 
-            // Save phrase and location for later use
-            lastSearchedPhrase = phrase;
-            lastPhraseLocation = loc;
+            // Update UI
+            lblVolume.Text = "Volume: " + loc.volume;
+            tbVolume.Value = loc.volume;
+            lblShelf.Text = "Shelf: " + loc.shelf;
+            tbShelf.Value = loc.shelf;
+            lblWall.Text = "Wall: " + loc.wall;
+            tbWall.Value = loc.wall;
+            pageRtb.Text = loc.page.ToString();
+            rtbHex.Text = loc.hex;
         }
+        private (string hex, int wall, int shelf, int volume, int page, int insertIndex) LocatePhrase(string phrase)
+        {
+            using (SHA256 sha = SHA256.Create())
+            {
+                byte[] hash = sha.ComputeHash(Encoding.UTF8.GetBytes(phrase));
 
+                string hex = BitConverter.ToString(hash).Replace("-", "").Substring(0, 20).ToLower();
+
+                int wall = (hash[20] % 4) + 1;
+                int shelf = (hash[21] % 5) + 1;
+                int volume = (hash[22] % 32) + 1;
+                int page = (hash[23] % 410) + 1;
+                int insertIndex = hash[24] % (PageLength - phrase.Length);
+
+                return (hex, wall, shelf, volume, page, insertIndex);
+            }
+        }
 
         private void hex_richTextBox1_TextChanged(object sender, EventArgs e)
         {
