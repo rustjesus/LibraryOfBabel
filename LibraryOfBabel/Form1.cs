@@ -26,32 +26,105 @@ namespace LibraryOfBabel
             lblShelf.Text = "Shelf: 1";
             lblWall.Text = "Wall: 1";
             pageRtb.Text = "1";
-            string hex = "0";
+            string hex = "0000000000000000000000000000000000000000000000000000000000000000";
             rtbHex.Text = hex;
             GoToPage(hex, 1, 1, 1, 1);
             LoadInjectedPages();
 
         }
-        private void GoToPage(string hex, int wall, int shelf, int volume, int page)
+        string MakeHexWithPhraseAndLocation(
+    string hex, int wall, int shelf, int volume, int page, int insertIndex, string phrase)
         {
-            // Generate page text
-            string pageText = GeneratePage(hex, wall, shelf, volume, page);
+            string encodedPhrase = string.IsNullOrEmpty(phrase)
+                ? ""
+                : Convert.ToBase64String(Encoding.UTF8.GetBytes(phrase));
 
-            // Display nicely
-            rtbOutput.Text =
-                $"Location:\n" +
-                $"Hex: {hex}\n" +
-                $"Wall: {wall}\n" +
-                $"Shelf: {shelf}\n" +
-                $"Volume: {volume}\n" +
-                $"Page: {page}\n\n" +
-                $"=== PAGE TEXT ===\n" +
-                $"{pageText}";
+            // Fixed-width hex: wall(2) + shelf(2) + volume(2) + page(3) + insertIndex(4)
+            string locationHex = $"{wall:X2}{shelf:X2}{volume:X2}{page:X3}{insertIndex:X4}";
 
-            // Reset highlighting
-            rtbOutput.Select(0, 0);
-            rtbOutput.SelectionColor = System.Drawing.Color.Black;
+            return hex.Substring(0, 64) + locationHex + encodedPhrase;
         }
+
+        (string hex, int wall, int shelf, int volume, int page, int insertIndex, string phrase)
+        ParseHexWithPhraseAndLocation(string hexWithPhrase)
+        {
+            // Ensure the string is at least 64 chars for the SHA256 part
+            if (hexWithPhrase.Length < 64)
+                throw new ArgumentException("Hex string too short.");
+
+            string hex = hexWithPhrase.Substring(0, 64);
+
+            // Default values if location info is missing
+            int wall = 1, shelf = 1, volume = 1, page = 1, insertIndex = 0;
+            string phrase = "";
+
+            if (hexWithPhrase.Length >= 77) // full location info is present
+            {
+                wall = Convert.ToInt32(hexWithPhrase.Substring(64, 2), 16);
+                shelf = Convert.ToInt32(hexWithPhrase.Substring(66, 2), 16);
+                volume = Convert.ToInt32(hexWithPhrase.Substring(68, 2), 16);
+                page = Convert.ToInt32(hexWithPhrase.Substring(70, 3), 16);
+                insertIndex = Convert.ToInt32(hexWithPhrase.Substring(73, 4), 16);
+
+                if (hexWithPhrase.Length > 77) // phrase is present
+                {
+                    string encodedPhrase = hexWithPhrase.Substring(77);
+                    try { phrase = Encoding.UTF8.GetString(Convert.FromBase64String(encodedPhrase)); }
+                    catch { phrase = ""; }
+                }
+            }
+
+            return (hex, wall, shelf, volume, page, insertIndex, phrase);
+        }
+
+        private void GoToPage(string hexWithPhrase, int currentWall, int currentShelf, int currentVolume, int currentPage)
+        {
+            var (hex, savedWall, savedShelf, savedVolume, savedPage, insertIndex, phrase) =
+                ParseHexWithPhraseAndLocation(hexWithPhrase);
+
+            string pageText;
+
+            // Only insert phrase if the current location matches the saved location
+            if (!string.IsNullOrEmpty(phrase) &&
+                currentWall == savedWall && currentShelf == savedShelf &&
+                currentVolume == savedVolume && currentPage == savedPage)
+            {
+                pageText = GeneratePageWithPhrase(hex, currentWall, currentShelf, currentVolume, currentPage, phrase, insertIndex);
+            }
+            else
+            {
+                pageText = GeneratePage(hex, currentWall, currentShelf, currentVolume, currentPage);
+            }
+
+            rtbOutput.Text =
+                $"Location:\nHex: {hex}\nWall: {currentWall}\nShelf: {currentShelf}\nVolume: {currentVolume}\nPage: {currentPage}\n\n=== PAGE TEXT ===\n{pageText}";
+
+            // Highlight phrase only if inserted
+            if (!string.IsNullOrEmpty(phrase) &&
+                currentWall == savedWall && currentShelf == savedShelf &&
+                currentVolume == savedVolume && currentPage == savedPage)
+            {
+                int index = rtbOutput.Text.IndexOf(phrase, StringComparison.Ordinal);
+                if (index >= 0)
+                {
+                    rtbOutput.Select(index, phrase.Length);
+                    rtbOutput.SelectionColor = System.Drawing.Color.Red;
+                    rtbOutput.SelectionBackColor = System.Drawing.Color.Transparent;
+                    rtbOutput.Select(0, 0);
+                }
+            }
+
+            // Update UI controls
+            rtbHex.Text = hexWithPhrase;
+            tbWall.Value = currentWall;
+            tbShelf.Value = currentShelf;
+            tbVolume.Value = currentVolume;
+            pageRtb.Text = currentPage.ToString();
+            lblWall.Text = $"Wall: {currentWall}";
+            lblShelf.Text = $"Shelf: {currentShelf}";
+            lblVolume.Text = $"Volume: {currentVolume}";
+        }
+
 
         // ------------------------------
         // Library of Babel – Page Logic
@@ -78,6 +151,40 @@ namespace LibraryOfBabel
                 return builder.ToString();
             }
 
+        }
+        // Encode a phrase into the hex string
+        // Encode a phrase into the hex string
+        string MakeHexWithPhrase(string hex, string phrase)
+        {
+            if (string.IsNullOrEmpty(phrase))
+                return hex;
+
+            // Base64 encode the phrase so it can safely be appended to the hex
+            string encodedPhrase = Convert.ToBase64String(Encoding.UTF8.GetBytes(phrase));
+            return hex.Substring(0, 64) + encodedPhrase;
+        }
+
+        // Decode the hex string back into original hex and phrase
+        (string hex, string phrase) ParseHexWithPhrase(string hexWithPhrase)
+        {
+            string hex = hexWithPhrase.Substring(0, 64);
+            string phrase = "";
+
+            if (hexWithPhrase.Length > 64)
+            {
+                string encodedPhrase = hexWithPhrase.Substring(64);
+                try
+                {
+                    phrase = Encoding.UTF8.GetString(Convert.FromBase64String(encodedPhrase));
+                }
+                catch
+                {
+                    // Invalid base64 → ignore
+                    phrase = "";
+                }
+            }
+
+            return (hex, phrase);
         }
 
         private (string hex, int wall, int shelf, int volume, int page) RandomLocation()
@@ -175,58 +282,32 @@ namespace LibraryOfBabel
         // Update button1_Click
         private void button1_Click(object sender, EventArgs e)
         {
-            string phrase = txtSearch.Text.Trim().ToLower(); // convert to lowercase
-            if (phrase.Length == 0)
+            string phrase = txtSearch.Text.Trim().ToLower();
+            if (string.IsNullOrEmpty(phrase))
             {
                 MessageBox.Show("Enter a phrase to search.");
                 return;
             }
 
-            //lastSearchedPhrase = phrase; // store lowercase phrase
-
+            // Get the location where this phrase should appear
             var loc = LocatePhrase(phrase);
 
-            string pageText = GeneratePageWithPhrase(
-                loc.hex, loc.wall, loc.shelf, loc.volume, loc.page,
-                phrase, loc.insertIndex
+            // Use a random SHA256 hex (or any logic you prefer)
+            string hex = RandomLocation().hex;
+
+            // Build a hex string that contains the phrase and location info
+            string hexWithPhrase = MakeHexWithPhraseAndLocation(
+                hex, loc.wall, loc.shelf, loc.volume, loc.page, loc.insertIndex, phrase
             );
 
-            string key = MakeKey(loc.hex, loc.wall, loc.shelf, loc.volume, loc.page);
+            // Update the hex textbox so the UI reflects the new hex
+            rtbHex.Text = hexWithPhrase;
 
-            // STORE IT
-            injectedPages[key] = pageText;
-            SaveInjectedPages();
-
-            // DISPLAY
-            rtbOutput.Text = pageText;
-
-
-
-            rtbOutput.Text =
-                $"Your phrase exists at:\nHex: {loc.hex}\nWall: {loc.wall}\nShelf: {loc.shelf}\nVolume: {loc.volume}\nPage: {loc.page}\n\n=== PAGE TEXT ===\n{pageText}";
-
-            // Highlight phrase
-            int index = rtbOutput.Text.IndexOf(phrase, StringComparison.Ordinal);
-            if (index >= 0)
-            {
-                rtbOutput.Select(index, phrase.Length);
-                rtbOutput.SelectionColor = System.Drawing.Color.Red;
-                rtbOutput.SelectionBackColor = System.Drawing.Color.Transparent;
-                rtbOutput.Select(0, 0);
-            }
-
-            // Update UI
-            lblVolume.Text = "Volume: " + loc.volume;
-            tbVolume.Value = loc.volume;
-            lblShelf.Text = "Shelf: " + loc.shelf;
-            tbShelf.Value = loc.shelf;
-            lblWall.Text = "Wall: " + loc.wall;
-            tbWall.Value = loc.wall;
-            pageRtb.Text = loc.page.ToString();
-            rtbHex.Text = loc.hex;
-
-            //lastPhraseLocation = loc; // store location
+            // Call GoToPage using the new hexWithPhrase and the location from the phrase
+            GoToPage(hexWithPhrase, loc.wall, loc.shelf, loc.volume, loc.page);
         }
+
+
 
         private (string hex, int wall, int shelf, int volume, int page, int insertIndex) LocatePhrase(string phrase)
         {
