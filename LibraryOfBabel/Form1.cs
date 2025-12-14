@@ -1,7 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using System.Windows.Forms;
+using System.Xml;
+using Newtonsoft.Json;
 
 namespace LibraryOfBabel
 {
@@ -25,6 +29,7 @@ namespace LibraryOfBabel
             string hex = "00000000000000000000";
             rtbHex.Text = hex;
             GoToPage(hex, 1, 1, 1, 1);
+            LoadInjectedPages();
 
         }
         private void GoToPage(string hex, int wall, int shelf, int volume, int page)
@@ -72,6 +77,7 @@ namespace LibraryOfBabel
 
                 return builder.ToString();
             }
+
         }
 
         private (string hex, int wall, int shelf, int volume, int page) RandomLocation()
@@ -95,6 +101,32 @@ namespace LibraryOfBabel
         // ------------------------------
         // BUTTON: SEARCH
         // ------------------------------
+        string MakeKey(string hex, int wall, int shelf, int volume, int page)
+        {
+            return $"{hex}|{wall}|{shelf}|{volume}|{page}";
+        }
+        private Dictionary<string, string> injectedPages =
+            new Dictionary<string, string>();
+
+        private readonly string InjectedPagesPath =
+            Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "injected_pages.json");
+
+        void LoadInjectedPages()
+        {
+            if (File.Exists(InjectedPagesPath))
+            {
+                injectedPages = JsonConvert.DeserializeObject<Dictionary<string, string>>(
+                    File.ReadAllText(InjectedPagesPath)
+                ) ?? new Dictionary<string, string>();
+            }
+        }
+        void SaveInjectedPages()
+        {
+            File.WriteAllText(
+                InjectedPagesPath,
+                JsonConvert.SerializeObject(injectedPages, Newtonsoft.Json.Formatting.Indented)
+            );
+        }
 
         private void btnSearch_Click(object sender, EventArgs e)
         {
@@ -134,8 +166,9 @@ namespace LibraryOfBabel
 
 
         // Class-level variable to store last searched phrase and location
-        private string lastSearchedPhrase = null;
-        private (string hex, int wall, int shelf, int volume, int page, int insertIndex)? lastPhraseLocation = null;
+        private string lastInjectedPageText = null;
+        private (string hex, int wall, int shelf, int volume, int page)? lastPhraseLocation = null;
+
 
         // Update button1_Click
         private void button1_Click(object sender, EventArgs e)
@@ -147,11 +180,25 @@ namespace LibraryOfBabel
                 return;
             }
 
-            lastSearchedPhrase = phrase; // store lowercase phrase
+            //lastSearchedPhrase = phrase; // store lowercase phrase
 
             var loc = LocatePhrase(phrase);
 
-            string pageText = GeneratePageWithPhrase(loc.hex, loc.wall, loc.shelf, loc.volume, loc.page, phrase, loc.insertIndex);
+            string pageText = GeneratePageWithPhrase(
+                loc.hex, loc.wall, loc.shelf, loc.volume, loc.page,
+                phrase, loc.insertIndex
+            );
+
+            string key = MakeKey(loc.hex, loc.wall, loc.shelf, loc.volume, loc.page);
+
+            // STORE IT
+            injectedPages[key] = pageText;
+            SaveInjectedPages();
+
+            // DISPLAY
+            rtbOutput.Text = pageText;
+
+
 
             rtbOutput.Text =
                 $"Your phrase exists at:\nHex: {loc.hex}\nWall: {loc.wall}\nShelf: {loc.shelf}\nVolume: {loc.volume}\nPage: {loc.page}\n\n=== PAGE TEXT ===\n{pageText}";
@@ -176,7 +223,7 @@ namespace LibraryOfBabel
             pageRtb.Text = loc.page.ToString();
             rtbHex.Text = loc.hex;
 
-            lastPhraseLocation = loc; // store location
+            //lastPhraseLocation = loc; // store location
         }
 
         private (string hex, int wall, int shelf, int volume, int page, int insertIndex) LocatePhrase(string phrase)
@@ -208,6 +255,7 @@ namespace LibraryOfBabel
             int wall = tbWall.Value;
             int shelf = tbShelf.Value;
             int volume = tbVolume.Value;
+
             if (!int.TryParse(pageRtb.Text.Trim(), out int page))
             {
                 MessageBox.Show("Page must be a number.");
@@ -219,22 +267,41 @@ namespace LibraryOfBabel
                 return;
             }
 
-            // Check if this location matches last searched phrase
-            if (lastPhraseLocation.HasValue)
+            // Generate the key for this location
+            string key = MakeKey(hex, wall, shelf, volume, page);
+
+            // Check if this page has an injected phrase
+            if (injectedPages.ContainsKey(key))
             {
-                var loc = lastPhraseLocation.Value;
-                if (loc.hex == hex && loc.wall == wall && loc.shelf == shelf && loc.volume == volume && loc.page == page)
+                string injectedText = injectedPages[key];
+                rtbOutput.Text =
+                    $"Location:\nHex: {hex}\nWall: {wall}\nShelf: {shelf}\nVolume: {volume}\nPage: {page}\n\n=== PAGE TEXT ===\n{injectedText}";
+
+                // Store last injected page for reference/highlighting
+                lastInjectedPageText = injectedText;
+                lastPhraseLocation = (hex, wall, shelf, volume, page);
+
+                // Highlight phrase if the search box contains text
+                string phrase = txtSearch.Text.Trim().ToLower();
+                if (!string.IsNullOrEmpty(phrase))
                 {
-                    string pageText = GeneratePageWithPhrase(loc.hex, loc.wall, loc.shelf, loc.volume, loc.page, lastSearchedPhrase, loc.insertIndex);
-                    rtbOutput.Text =
-                        $"Location:\nHex: {hex}\nWall: {wall}\nShelf: {shelf}\nVolume: {volume}\nPage: {page}\n\n=== PAGE TEXT ===\n{pageText}";
-                    return;
+                    int index = rtbOutput.Text.IndexOf(phrase, StringComparison.Ordinal);
+                    if (index >= 0)
+                    {
+                        rtbOutput.Select(index, phrase.Length);
+                        rtbOutput.SelectionColor = System.Drawing.Color.Red;
+                        rtbOutput.SelectionBackColor = System.Drawing.Color.Transparent;
+                        rtbOutput.Select(0, 0);
+                    }
                 }
+                return;
             }
 
-            // Normal page if no phrase at this location
+            // If no injected phrase exists, just display normal page
+            lastInjectedPageText = null;
             GoToPage(hex, wall, shelf, volume, page);
         }
+
 
         private void vol_trackBar3_Scroll(object sender, EventArgs e)
         {
