@@ -26,7 +26,7 @@ namespace LibraryOfBabel
             lblShelf.Text = "Shelf: 1";
             lblWall.Text = "Wall: 1";
             pageRtb.Text = "1";
-            string hex = "00000000000000000000";
+            string hex = "0";
             rtbHex.Text = hex;
             GoToPage(hex, 1, 1, 1, 1);
             LoadInjectedPages();
@@ -324,5 +324,22 @@ namespace LibraryOfBabel
         {
 
         }
+
+        private void randButton2_Click(object sender, EventArgs e)
+        {
+            var loc = RandomLocation();
+            GoToPage(loc.hex, loc.wall, loc.shelf, loc.volume, loc.page);
+
+            // Update the UI controls
+            rtbHex.Text = loc.hex;
+            tbWall.Value = loc.wall;
+            tbShelf.Value = loc.shelf;
+            tbVolume.Value = loc.volume;
+            pageRtb.Text = loc.page.ToString();
+            lblWall.Text = $"Wall: {loc.wall}";
+            lblShelf.Text = $"Shelf: {loc.shelf}";
+            lblVolume.Text = $"Volume: {loc.volume}";
+        }
+
     }
 }

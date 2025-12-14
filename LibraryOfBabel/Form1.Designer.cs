@@ -45,6 +45,7 @@
             this.label4 = new System.Windows.Forms.Label();
             this.pageRtb = new System.Windows.Forms.RichTextBox();
             this.label5 = new System.Windows.Forms.Label();
+            this.randButton2 = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.tbWall)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.tbShelf)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.tbVolume)).BeginInit();
@@ -209,11 +210,22 @@
             this.label5.TabIndex = 19;
             this.label5.Text = "Page:";
             // 
+            // randButton2
+            // 
+            this.randButton2.Location = new System.Drawing.Point(690, 163);
+            this.randButton2.Name = "randButton2";
+            this.randButton2.Size = new System.Drawing.Size(75, 23);
+            this.randButton2.TabIndex = 20;
+            this.randButton2.Text = "Random";
+            this.randButton2.UseVisualStyleBackColor = true;
+            this.randButton2.Click += new System.EventHandler(this.randButton2_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(797, 723);
+            this.Controls.Add(this.randButton2);
             this.Controls.Add(this.label5);
             this.Controls.Add(this.pageRtb);
             this.Controls.Add(this.label4);
@@ -259,6 +271,7 @@
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.RichTextBox pageRtb;
         private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Button randButton2;
     }
 }
 
