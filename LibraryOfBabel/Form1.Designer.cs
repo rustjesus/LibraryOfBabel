@@ -102,7 +102,7 @@
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(37, 13);
             this.label3.TabIndex = 6;
-            this.label3.Text = "v0.0.4";
+            this.label3.Text = "v0.0.5";
             // 
             // tbWall
             // 
