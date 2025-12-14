@@ -65,7 +65,7 @@
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(93, 23);
             this.button1.TabIndex = 2;
-            this.button1.Text = "Search Phrase";
+            this.button1.Text = "Search Input";
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
@@ -102,7 +102,7 @@
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(37, 13);
             this.label3.TabIndex = 6;
-            this.label3.Text = "v0.0.6";
+            this.label3.Text = "v0.0.8";
             // 
             // tbWall
             // 

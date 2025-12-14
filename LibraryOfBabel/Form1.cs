@@ -289,23 +289,21 @@ namespace LibraryOfBabel
                 return;
             }
 
-            // Get the location where this phrase should appear
+            // Get the deterministic location and hex for this phrase
             var loc = LocatePhrase(phrase);
-
-            // Use a random SHA256 hex (or any logic you prefer)
-            string hex = RandomLocation().hex;
 
             // Build a hex string that contains the phrase and location info
             string hexWithPhrase = MakeHexWithPhraseAndLocation(
-                hex, loc.wall, loc.shelf, loc.volume, loc.page, loc.insertIndex, phrase
+                loc.hex, loc.wall, loc.shelf, loc.volume, loc.page, loc.insertIndex, phrase
             );
 
             // Update the hex textbox so the UI reflects the new hex
             rtbHex.Text = hexWithPhrase;
 
-            // Call GoToPage using the new hexWithPhrase and the location from the phrase
+            // Go to the page deterministically
             GoToPage(hexWithPhrase, loc.wall, loc.shelf, loc.volume, loc.page);
         }
+
 
 
 
