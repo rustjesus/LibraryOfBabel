@@ -84,11 +84,13 @@ namespace LibraryOfBabel
         {
             Random r = new Random();
 
+            int hexLength = 64; // full SHA-256 length in hex
             string hex = "";
-            for (int i = 0; i < 20; i++)
+            for (int i = 0; i < hexLength; i++)
             {
                 hex += "0123456789abcdef"[r.Next(16)];
             }
+
 
             int wall = r.Next(1, 5);
             int shelf = r.Next(1, 6);
@@ -151,7 +153,7 @@ namespace LibraryOfBabel
             {
                 byte[] hash = sha.ComputeHash(Encoding.UTF8.GetBytes(phrase));
 
-                string hex = BitConverter.ToString(hash).Replace("-", "").Substring(0, 20).ToLower();
+                string hex = BitConverter.ToString(hash).Replace("-", "").ToLower();
 
                 int wall = (hash[20] % 4) + 1;
                 int shelf = (hash[21] % 5) + 1;
@@ -232,7 +234,7 @@ namespace LibraryOfBabel
             {
                 byte[] hash = sha.ComputeHash(Encoding.UTF8.GetBytes(phrase));
 
-                string hex = BitConverter.ToString(hash).Replace("-", "").Substring(0, 20).ToLower();
+                string hex = BitConverter.ToString(hash).Replace("-", "").ToLower();
 
                 int wall = (hash[20] % 4) + 1;
                 int shelf = (hash[21] % 5) + 1;

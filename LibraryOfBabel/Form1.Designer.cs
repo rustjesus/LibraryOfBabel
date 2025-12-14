@@ -102,7 +102,7 @@
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(37, 13);
             this.label3.TabIndex = 6;
-            this.label3.Text = "v0.0.5";
+            this.label3.Text = "v0.0.6";
             // 
             // tbWall
             // 
@@ -141,7 +141,7 @@
             // 
             this.rtbHex.Location = new System.Drawing.Point(46, 31);
             this.rtbHex.Name = "rtbHex";
-            this.rtbHex.Size = new System.Drawing.Size(348, 24);
+            this.rtbHex.Size = new System.Drawing.Size(348, 65);
             this.rtbHex.TabIndex = 12;
             this.rtbHex.Text = "";
             this.rtbHex.TextChanged += new System.EventHandler(this.hex_richTextBox1_TextChanged);
