@@ -76,6 +76,7 @@
             this.txtSearch.Size = new System.Drawing.Size(669, 45);
             this.txtSearch.TabIndex = 3;
             this.txtSearch.Text = "";
+            this.txtSearch.TextChanged += new System.EventHandler(this.txtSearch_TextChanged);
             // 
             // label1
             // 

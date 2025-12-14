@@ -422,5 +422,14 @@ namespace LibraryOfBabel
             lblVolume.Text = $"Volume: {loc.volume}";
         }
 
+        private void txtSearch_TextChanged(object sender, EventArgs e)
+        {
+            if (txtSearch.Text.Length > 3200)
+            {
+                txtSearch.Text = txtSearch.Text.Substring(0, 3200);
+                txtSearch.SelectionStart = txtSearch.Text.Length; // keep cursor at end
+                MessageBox.Show("Phrase cannot exceed 3200 characters.");
+            }
+        }
     }
 }
